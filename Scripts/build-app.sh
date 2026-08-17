@@ -7,6 +7,7 @@ APP_PATH="$PROJECT_DIR/dist/Notch Music.app"
 CONTENTS_PATH="$APP_PATH/Contents"
 MACOS_PATH="$CONTENTS_PATH/MacOS"
 RESOURCES_PATH="$CONTENTS_PATH/Resources"
+LEGAL_PATH="$RESOURCES_PATH/Legal"
 ICON_SOURCE_PATH="$PROJECT_DIR/.build/AppIcon-1024.png"
 ICONSET_PATH="$PROJECT_DIR/.build/AppIcon.iconset"
 ICON_TIFF_DIR="$PROJECT_DIR/.build/AppIcon.tiffset"
@@ -21,12 +22,14 @@ swift build -c release --disable-sandbox
 BIN_PATH=$(swift build -c release --show-bin-path)
 
 rm -rf "$APP_PATH"
-mkdir -p "$MACOS_PATH" "$RESOURCES_PATH"
+mkdir -p "$MACOS_PATH" "$RESOURCES_PATH" "$LEGAL_PATH"
 
 cp "$BIN_PATH/NotchMusic" "$MACOS_PATH/NotchMusic"
 cp "$BIN_PATH/libMediaRemoteAdapter.dylib" "$MACOS_PATH/libMediaRemoteAdapter.dylib"
-cp -R "$BIN_PATH/MediaRemoteAdapter_MediaRemoteAdapter.bundle" "$APP_PATH/MediaRemoteAdapter_MediaRemoteAdapter.bundle"
+cp -R "$BIN_PATH/MediaRemoteAdapter_MediaRemoteAdapter.bundle" "$RESOURCES_PATH/MediaRemoteAdapter_MediaRemoteAdapter.bundle"
 cp "$PROJECT_DIR/Resources/Info.plist" "$CONTENTS_PATH/Info.plist"
+cp "$PROJECT_DIR/LICENSE" "$LEGAL_PATH/Notch-Music-LICENSE.txt"
+cp "$PROJECT_DIR/THIRD_PARTY_NOTICES.md" "$LEGAL_PATH/THIRD_PARTY_NOTICES.md"
 
 xcrun swift "$PROJECT_DIR/Scripts/GenerateIcon.swift" "$ICON_SOURCE_PATH"
 rm -rf "$ICONSET_PATH"
@@ -65,5 +68,18 @@ tiff2icns "$ICON_TIFF_PATH" "$RESOURCES_PATH/AppIcon.icns"
 
 chmod +x "$MACOS_PATH/NotchMusic"
 touch "$APP_PATH"
+
+# Produce a structurally valid signature even for local builds. Set
+# CODESIGN_IDENTITY to a Developer ID Application identity for distribution.
+CODESIGN_IDENTITY=${CODESIGN_IDENTITY:--}
+SIGNING_ARGS=(--force --sign "$CODESIGN_IDENTITY")
+if [[ "$CODESIGN_IDENTITY" != "-" ]]; then
+    SIGNING_ARGS+=(--options runtime --timestamp)
+fi
+
+codesign "${SIGNING_ARGS[@]}" "$MACOS_PATH/libMediaRemoteAdapter.dylib"
+codesign "${SIGNING_ARGS[@]}" "$MACOS_PATH/NotchMusic"
+codesign "${SIGNING_ARGS[@]}" "$APP_PATH"
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
 echo "$APP_PATH"
