@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple&logoColor=white" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white" alt="Swift 6.0">
   <img src="https://img.shields.io/badge/UI-SwiftUI-0A84FF" alt="SwiftUI">
-  <a href="https://github.com/ghsgkq/notch-music/releases/latest"><img src="https://img.shields.io/badge/Release-v1.0.0-2ea44f" alt="Latest release"></a>
+  <a href="https://github.com/ghsgkq/notch-music/releases/latest"><img src="https://img.shields.io/github/v/release/ghsgkq/notch-music?display_name=tag&color=2ea44f" alt="Latest release"></a>
 </p>
 
 <p align="center">
@@ -46,7 +46,7 @@ Notch Music은 macOS에서 재생 중인 음악을 감지해 MacBook 노치 주�
 
 ### GitHub Releases에서 설치
 
-1. [최신 Release](https://github.com/ghsgkq/notch-music/releases/latest)에서 `Notch-Music-v1.0.0.zip`을 다운로드합니다.
+1. [최신 Release](https://github.com/ghsgkq/notch-music/releases/latest)에서 `Notch-Music-<버전>.zip`을 다운로드합니다.
 2. 압축을 풀고 `Notch Music.app`을 `응용 프로그램` 폴더로 옮깁니다.
 3. 앱을 실행하면 Dock 대신 메뉴 막대에 음표 아이콘이 나타납니다.
 
@@ -111,4 +111,14 @@ notch-music/
 
 최신 실행 파일과 변경 사항은 [GitHub Releases](https://github.com/ghsgkq/notch-music/releases)에서 확인할 수 있습니다.
 
-현재 버전: **v1.0.0**
+버전별 변경 사항은 [CHANGELOG.md](./CHANGELOG.md)에서 확인할 수 있습니다.
+
+## 기여 및 보안
+
+- 버그 제보와 기능 제안은 GitHub Issues를 이용해 주세요.
+- 코드 기여 방법은 [CONTRIBUTING.md](./CONTRIBUTING.md)를 참고해 주세요.
+- 보안 취약점은 공개 Issue 대신 [SECURITY.md](./SECURITY.md)의 비공개 신고 절차를 이용해 주세요.
+
+## 라이선스
+
+Notch Music은 [MIT License](./LICENSE)로 배포됩니다. 포함된 외부 구성 요소의 저작권과 라이선스는 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)에서 확인할 수 있습니다.
