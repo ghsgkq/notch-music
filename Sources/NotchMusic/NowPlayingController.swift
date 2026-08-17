@@ -26,9 +26,11 @@ final class NowPlayingController: ObservableObject {
         guard !started else { return }
         started = true
 
-        if ProcessInfo.processInfo.environment["NOTCH_MUSIC_DEMO"] == "1" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.applyDemo()
+        let demoMode = ProcessInfo.processInfo.environment["NOTCH_MUSIC_DEMO"]
+        if demoMode == "1" || demoMode == "compact" {
+            let delay = demoMode == "compact" ? 3.0 : 0.5
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.applyDemo(expanded: demoMode != "compact")
             }
             return
         }
@@ -111,11 +113,11 @@ final class NowPlayingController: ObservableObject {
         }
     }
 
-    private func applyDemo() {
+    private func applyDemo(expanded: Bool) {
         track = Track(title: "Dynamic Island Preview", artist: "Notch Music", album: "Demo", artwork: nil)
         isPlaying = true
         hasActiveTrack = true
-        isExpanded = true
+        isExpanded = expanded
         duration = 244
         elapsedTime = 72
         progressUpdatedAt = Date()
