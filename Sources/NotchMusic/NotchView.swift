@@ -162,7 +162,7 @@ struct NotchView: View {
                     HStack(spacing: 5) {
                         Circle().fill(accentColor).frame(width: 5, height: 5)
                         PlaybackIndicatorView(style: animationStyle, color: accentColor, isPlaying: player.isPlaying, reduceMotion: reduceMotion, isVisible: showEqualizer && revealsCompactActivity)
-                            .frame(width: 17, height: 18)
+                            .frame(width: animationStyle.compactWidth, height: 18)
                             .opacity(showEqualizer ? 1 : 0)
                     }
                 } else {
@@ -206,7 +206,7 @@ struct NotchView: View {
                     .fill(player.isPlaying ? accentColor : .white.opacity(0.35))
                     .frame(width: 5, height: 5)
                 PlaybackIndicatorView(style: animationStyle, color: accentColor, isPlaying: player.isPlaying, reduceMotion: reduceMotion, isVisible: showEqualizer && revealsCompactActivity)
-                    .frame(width: 17, height: 18)
+                    .frame(width: animationStyle.compactWidth, height: 18)
                     .opacity(showEqualizer && player.isPlaying ? 1 : 0)
             }
         }
@@ -246,7 +246,7 @@ struct NotchView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 PlaybackIndicatorView(style: animationStyle, color: accentColor, isPlaying: player.isPlaying, reduceMotion: reduceMotion, isVisible: showEqualizer && player.isExpanded)
-                    .frame(width: 20, height: 24)
+                    .frame(width: animationStyle.expandedWidth, height: 24)
                     .opacity(showEqualizer ? (player.isPlaying ? 1 : 0.25) : 0)
             }
 

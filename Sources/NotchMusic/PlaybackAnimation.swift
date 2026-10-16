@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum PlaybackAnimationStyle: String, CaseIterable, Identifiable {
-    case bars, wave, dots, ring
+    case bars, wave, dots, ring, nyanCat
 
     var id: String { rawValue }
 
@@ -13,6 +13,7 @@ enum PlaybackAnimationStyle: String, CaseIterable, Identifiable {
         case .wave: "파동"
         case .dots: "점프하는 점"
         case .ring: "회전 링"
+        case .nyanCat: "Nyan Cat"
         }
     }
 
@@ -22,8 +23,13 @@ enum PlaybackAnimationStyle: String, CaseIterable, Identifiable {
         case .wave: "부드럽게 흐르는 물결"
         case .dots: "번갈아 뛰어오르는 세 점"
         case .ring: "원을 따라 회전하는 빛"
+        case .nyanCat: "무지개를 남기며 날아가는 픽셀 고양이"
         }
     }
+
+    var compactWidth: CGFloat { self == .nyanCat ? 30 : 17 }
+    var expandedWidth: CGFloat { self == .nyanCat ? 40 : 20 }
+    var previewWidth: CGFloat { self == .nyanCat ? 42 : 30 }
 }
 
 /// Geometry is shared by the live view and previews, and stays within the supplied bounds.
@@ -34,10 +40,16 @@ struct PlaybackAnimationGeometry: Equatable {
         let angle: Double
     }
 
+    struct Pixel: Equatable {
+        let rect: CGRect
+        let color: NyanPixelColor
+    }
+
     var bars: [CGRect] = []
     var dots: [CGRect] = []
     var wave: [CGPoint] = []
     var ring: Ring?
+    var pixels: [Pixel] = []
     let lineWidth: CGFloat
 
     init(style: PlaybackAnimationStyle, size: CGSize, time: TimeInterval, isPlaying: Bool, reduceMotion: Bool) {
@@ -77,6 +89,62 @@ struct PlaybackAnimationGeometry: Equatable {
             }
         case .ring:
             ring = Ring(center: CGPoint(x: width / 2, y: height / 2), radius: side * 0.34, angle: phase - .pi / 2)
+        case .nyanCat:
+            let unit = min(width / 32, height / 18)
+            let origin = CGPoint(x: (width - unit * 32) / 2, y: (height - unit * 18) / 2)
+            let bob = sin(phase * 2) > 0 ? 1 : 0
+            let stride = abs(Int(floor(phase / (.pi / 2)))) % 2
+            func pixel(_ x: Int, _ y: Int, _ color: NyanPixelColor) -> Pixel {
+                Pixel(rect: CGRect(x: origin.x + CGFloat(x) * unit, y: origin.y + CGFloat(y) * unit, width: unit, height: unit), color: color)
+            }
+            func sprite(_ rows: [String], x: Int, y: Int) -> [Pixel] {
+                rows.enumerated().flatMap { row, line in
+                    line.enumerated().compactMap { column, symbol in
+                        NyanPixelColor(rawValue: String(symbol)).map { pixel(x + column, y + row + bob, $0) }
+                    }
+                }
+            }
+            let rainbow: [NyanPixelColor] = [.red, .orange, .yellow, .green, .blue, .purple]
+            for column in 0..<14 {
+                let ripple = Int((sin(phase * 2 - Double(column) * 0.55) * 0.8).rounded())
+                for (row, color) in rainbow.enumerated() { pixels.append(pixel(column, 6 + row + ripple, color)) }
+            }
+            pixels += sprite(["K....", "KGK..", ".KGKK", "..KGK"], x: 9, y: 7)
+            for (index, x) in [14, 19, 27].enumerated() {
+                let step = (index + stride) % 2
+                pixels += sprite(["KGK", "KK."], x: x - step, y: 12 + step)
+            }
+            pixels += sprite([
+                ".KKKKKKKKK.", "KTTTTTTTTTK", "KTPPPPPPPTK",
+                "KTPPSPPPPTK", "KTPPPPSPPTK", "KTPPSPPPPTK",
+                "KTPPPPPPPTK", "KTTTTTTTTTK", ".KKKKKKKKK."
+            ], x: 13, y: 3)
+            pixels += sprite([
+                ".K.....K.", "KGGK.KGGK", "KGGGGGGGK", "KGGGGGGGK",
+                "KGKGGGKGK", "KCGGGGGCK", ".KGGKGGK.", "..KKKKK.."
+            ], x: 23, y: 4)
+        }
+    }
+}
+
+enum NyanPixelColor: String {
+    case outline = "K", crust = "T", pastry = "P", sprinkle = "S", fur = "G", cheek = "C"
+    case red = "r", orange = "o", yellow = "y", green = "g", blue = "b", purple = "v"
+
+    var color: Color {
+        switch self {
+        case .outline: Color(red: 0.08, green: 0.07, blue: 0.12)
+        case .crust: Color(red: 0.96, green: 0.78, blue: 0.58)
+        case .pastry: Color(red: 0.98, green: 0.64, blue: 0.77)
+        case .sprinkle: Color(red: 0.88, green: 0.25, blue: 0.52)
+        case .fur: Color(red: 0.64, green: 0.67, blue: 0.72)
+        case .cheek: Color(red: 1, green: 0.45, blue: 0.6)
+        case .red: Color(red: 1, green: 0.30, blue: 0.38)
+        case .orange: Color(red: 1, green: 0.64, blue: 0.22)
+        case .yellow: Color(red: 1, green: 0.88, blue: 0.30)
+        case .green: Color(red: 0.40, green: 0.90, blue: 0.35)
+        case .blue: Color(red: 0.30, green: 0.74, blue: 1)
+        case .purple: Color(red: 0.68, green: 0.42, blue: 1)
         }
     }
 }
@@ -91,6 +159,9 @@ struct PlaybackAnimationFrame: View {
     var body: some View {
         Canvas { context, size in
             let geometry = PlaybackAnimationGeometry(style: style, size: size, time: time, isPlaying: isPlaying, reduceMotion: reduceMotion)
+            for pixel in geometry.pixels {
+                context.fill(Path(pixel.rect), with: .color(pixel.color.color), style: FillStyle(antialiased: false))
+            }
             for bar in geometry.bars {
                 context.fill(Path(roundedRect: bar, cornerRadius: bar.width / 2), with: .color(color))
             }
@@ -148,7 +219,7 @@ struct PlaybackAnimationPicker: View {
                 } label: {
                     HStack(spacing: 10) {
                         PlaybackIndicatorView(style: style, color: color, isPlaying: selected && isEnabled, reduceMotion: reduceMotion)
-                            .frame(width: 30, height: 30)
+                            .frame(width: style.previewWidth, height: 30)
                         Text(style.title).font(.system(size: 12, weight: .semibold))
                         Spacer(minLength: 0)
                         if selected {

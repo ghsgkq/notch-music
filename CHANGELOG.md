@@ -6,6 +6,8 @@ Notable changes to Notch Music are documented in this file.
 
 ### Added
 
+- Nyan Cat playback animation with a pixel cat, animated rainbow trail, and a wider compact indicator.
+
 - Selectable playback animations with live previews: bars, wave, bouncing dots, and rotating ring. Paused playback and Reduce Motion stop their animation.
 
 - Optional hover expansion with delayed opening, delayed dismissal, and preservation of manually opened players.
