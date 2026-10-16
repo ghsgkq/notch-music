@@ -9,6 +9,7 @@ Notable changes to Notch Music are documented in this file.
 - Optional hover expansion with delayed opening, delayed dismissal, and preservation of manually opened players.
 - Artwork-derived accent colors with a manual-color fallback for missing or neutral artwork.
 - Launch at login through macOS Service Management, including approval status and registration errors.
+- Playback source filtering with a browser exclusion switch, per-app choices, and immediate updates to the current track.
 
 - MIT project license, third-party notices, security policy, and contribution guide.
 - Issue templates, Dependabot configuration, and macOS continuous integration.

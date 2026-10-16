@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject var player: NowPlayingController
     @StateObject private var loginItem = LoginItemController()
     @AppStorage(PreferenceKey.autoExpand) private var autoExpand = false
     @AppStorage(PreferenceKey.autoCollapse) private var autoCollapse = true
@@ -87,6 +88,10 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                settingsGroup("표시할 앱") {
+                    PlaybackFilterView(player: player)
+                }
+
                 settingsGroup("스타일") {
                     Toggle("펼친 화면에 리퀴드 글래스 적용", isOn: $liquidGlass)
                     Toggle("앨범 표지 색상 자동 적용", isOn: $artworkAccent)
@@ -128,6 +133,8 @@ struct SettingsView: View {
 
     private func reset() {
         if loginItem.canConfigure { loginItem.setEnabled(false) }
+        UserDefaults.standard.removeObject(forKey: PreferenceKey.playbackFilter)
+        player.refreshPlaybackFilter()
         autoExpand = false
         autoCollapse = true
         autoCollapseDelay = 4.5

@@ -33,6 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleNotch() { notchPanel?.toggleExpanded() }
-    @objc private func openSettings() { settingsWindow.show() }
+    @objc private func openSettings() { settingsWindow.show(player: player) }
     @objc private func quit() { NSApp.terminate(nil) }
 }

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import MediaRemoteAdapter
 
 struct Track: Equatable {
@@ -14,6 +15,7 @@ final class NowPlayingController: ObservableObject {
     @Published var isPlaying = false
     @Published var isExpanded = false
     @Published private(set) var artworkAccent: NSColor?
+    @Published private(set) var knownSources: [PlaybackApp] = []
     @Published private(set) var hasActiveTrack = false
     @Published private(set) var duration: TimeInterval = 0
     @Published private(set) var elapsedTime: TimeInterval = 0
@@ -27,10 +29,20 @@ final class NowPlayingController: ObservableObject {
     private var pointerIsInside = false
     private let hoverOpenDelay: Duration
     private let hoverCloseDelay: Duration
+    private let defaults: UserDefaults
+    private var playbackFilter: PlaybackFilter
+    private var lastTrackInfo: TrackInfo?
+    private var preferenceSubscription: AnyCancellable?
 
-    init(hoverOpenDelay: Duration = .milliseconds(350), hoverCloseDelay: Duration = .milliseconds(700)) {
+    init(hoverOpenDelay: Duration = .milliseconds(350), hoverCloseDelay: Duration = .milliseconds(700), defaults: UserDefaults = .standard) {
         self.hoverOpenDelay = hoverOpenDelay
         self.hoverCloseDelay = hoverCloseDelay
+        self.defaults = defaults
+        self.playbackFilter = .decode(defaults.data(forKey: PreferenceKey.playbackFilter))
+        preferenceSubscription = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: defaults)
+            .sink { [weak self] _ in
+                Task { @MainActor in self?.refreshPlaybackFilter() }
+            }
     }
 
     func start() {
@@ -47,7 +59,7 @@ final class NowPlayingController: ObservableObject {
         }
 
         mediaController.onTrackInfoReceived = { [weak self] info in
-            Task { @MainActor in self?.apply(info) }
+            Task { @MainActor in self?.receive(info) }
         }
         mediaController.onListenerTerminated = { [weak self] in
             Task { @MainActor in
@@ -58,13 +70,13 @@ final class NowPlayingController: ObservableObject {
         }
         mediaController.startListening()
         mediaController.getTrackInfo { [weak self] info in
-            Task { @MainActor in self?.apply(info) }
+            Task { @MainActor in self?.receive(info) }
         }
     }
 
-    func playPause() { mediaController.togglePlayPause() }
-    func previous() { mediaController.previousTrack() }
-    func next() { mediaController.nextTrack() }
+    func playPause() { if hasActiveTrack { mediaController.togglePlayPause() } }
+    func previous() { if hasActiveTrack { mediaController.previousTrack() } }
+    func next() { if hasActiveTrack { mediaController.nextTrack() } }
 
     func seek(toProgress progress: Double) {
         guard duration > 0 else { return }
@@ -116,17 +128,48 @@ final class NowPlayingController: ObservableObject {
         return min(1, max(0, (elapsedTime + running) / duration))
     }
 
+    func receive(_ info: TrackInfo?) {
+        lastTrackInfo = info
+        apply(info)
+    }
+
+    func refreshPlaybackFilter() {
+        let filter = PlaybackFilter.decode(defaults.data(forKey: PreferenceKey.playbackFilter))
+        guard filter != playbackFilter else { return }
+        playbackFilter = filter
+        apply(lastTrackInfo)
+    }
+
+    private func clearTrack() {
+        track = Track()
+        artworkAccent = nil
+        isPlaying = false
+        hasActiveTrack = false
+        duration = 0
+        elapsedTime = 0
+        autoCollapseTask?.cancel()
+    }
+
     private func apply(_ info: TrackInfo?) {
         guard let payload = info?.payload, let title = payload.title, !title.isEmpty else {
             if ProcessInfo.processInfo.environment["NOTCH_MUSIC_DEBUG"] == "1" {
                 print("[NotchMusic] adapter returned no active track")
             }
-            track = Track()
-            artworkAccent = nil
-            isPlaying = false
-            hasActiveTrack = false
-            duration = 0
-            elapsedTime = 0
+            clearTrack()
+            return
+        }
+
+        if let id = payload.bundleIdentifier, !id.isEmpty {
+            let app = PlaybackApp(id: id, name: payload.applicationName ?? id)
+            if let index = knownSources.firstIndex(where: { $0.id == id }) {
+                if knownSources[index] != app { knownSources[index] = app }
+            } else { knownSources.append(app) }
+        }
+        guard playbackFilter.allows(payload.bundleIdentifier) else {
+            clearTrack()
+            hoverTask?.cancel()
+            openedByHover = false
+            isExpanded = false
             return
         }
 
