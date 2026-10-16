@@ -6,6 +6,7 @@ struct NotchView: View {
     @AppStorage(PreferenceKey.showArtwork) private var showArtwork = true
     @AppStorage(PreferenceKey.showProgress) private var showProgress = true
     @AppStorage(PreferenceKey.showEqualizer) private var showEqualizer = true
+    @AppStorage(PreferenceKey.playbackAnimation) private var playbackAnimation = PlaybackAnimationStyle.bars.rawValue
     @AppStorage(PreferenceKey.hoverHighlight) private var hoverHighlight = true
     @AppStorage(PreferenceKey.hoverToExpand) private var hoverToExpand = true
     @AppStorage(PreferenceKey.reduceMotion) private var reduceMotion = false
@@ -33,6 +34,8 @@ struct NotchView: View {
     private var expansionAnimation: Animation {
         reduceMotion ? .easeOut(duration: 0.08) : .spring(response: 0.4, dampingFraction: 0.84)
     }
+
+    private var animationStyle: PlaybackAnimationStyle { .init(storedValue: playbackAnimation) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -158,7 +161,7 @@ struct NotchView: View {
                 if player.isPlaying {
                     HStack(spacing: 5) {
                         Circle().fill(accentColor).frame(width: 5, height: 5)
-                        EqualizerView(color: accentColor, reduceMotion: reduceMotion)
+                        PlaybackIndicatorView(style: animationStyle, color: accentColor, isPlaying: player.isPlaying, reduceMotion: reduceMotion, isVisible: showEqualizer && revealsCompactActivity)
                             .frame(width: 17, height: 18)
                             .opacity(showEqualizer ? 1 : 0)
                     }
@@ -202,7 +205,7 @@ struct NotchView: View {
                 Circle()
                     .fill(player.isPlaying ? accentColor : .white.opacity(0.35))
                     .frame(width: 5, height: 5)
-                EqualizerView(color: accentColor, reduceMotion: reduceMotion)
+                PlaybackIndicatorView(style: animationStyle, color: accentColor, isPlaying: player.isPlaying, reduceMotion: reduceMotion, isVisible: showEqualizer && revealsCompactActivity)
                     .frame(width: 17, height: 18)
                     .opacity(showEqualizer && player.isPlaying ? 1 : 0)
             }
@@ -242,7 +245,7 @@ struct NotchView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                EqualizerView(color: accentColor, reduceMotion: reduceMotion)
+                PlaybackIndicatorView(style: animationStyle, color: accentColor, isPlaying: player.isPlaying, reduceMotion: reduceMotion, isVisible: showEqualizer && player.isExpanded)
                     .frame(width: 20, height: 24)
                     .opacity(showEqualizer ? (player.isPlaying ? 1 : 0.25) : 0)
             }
@@ -442,30 +445,6 @@ private struct MiniArtwork: View {
         .overlay {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(isPlaying ? accentColor.opacity(0.55) : .white.opacity(0.12), lineWidth: 1)
-        }
-    }
-}
-
-private struct EqualizerView: View {
-    let color: Color
-    let reduceMotion: Bool
-    @State private var active = false
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 2) {
-            ForEach(0..<4) { index in
-                Capsule()
-                    .fill(color)
-                    .frame(width: 2.5, height: active ? CGFloat([7, 15, 11, 17][index]) : CGFloat([7, 11, 8, 13][index]))
-                    .animation(
-                        reduceMotion ? nil : .easeInOut(duration: 0.32).repeatForever(autoreverses: true).delay(Double(index) * 0.08),
-                        value: active
-                    )
-            }
-        }
-        .onAppear { active = !reduceMotion }
-        .onChange(of: reduceMotion) { _, newValue in
-            active = !newValue
         }
     }
 }

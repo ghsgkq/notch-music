@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage(PreferenceKey.showArtwork) private var showArtwork = true
     @AppStorage(PreferenceKey.showProgress) private var showProgress = true
     @AppStorage(PreferenceKey.showEqualizer) private var showEqualizer = true
+    @AppStorage(PreferenceKey.playbackAnimation) private var playbackAnimation = PlaybackAnimationStyle.bars.rawValue
     @AppStorage(PreferenceKey.hoverHighlight) private var hoverHighlight = true
     @AppStorage(PreferenceKey.hoverToExpand) private var hoverToExpand = true
     @AppStorage(PreferenceKey.reduceMotion) private var reduceMotion = false
@@ -17,6 +18,11 @@ struct SettingsView: View {
     @AppStorage(PreferenceKey.liquidGlass) private var liquidGlass = true
     @AppStorage(PreferenceKey.displayTarget) private var displayTarget = DisplayTarget.builtIn.rawValue
     @AppStorage(PreferenceKey.dynamicCompactReveal) private var dynamicCompactReveal = true
+
+    private var previewAccentColor: Color {
+        if artworkAccent, let color = player.artworkAccent { return Color(nsColor: color) }
+        return AccentChoice(rawValue: accent)?.color ?? .green
+    }
 
     var body: some View {
         ScrollView {
@@ -65,12 +71,21 @@ struct SettingsView: View {
                     Toggle("음악 감지 시 노치 양옆으로 펼치기", isOn: $dynamicCompactReveal)
                     Toggle("앨범 표지 표시", isOn: $showArtwork)
                     Toggle("재생 진행률 표시", isOn: $showProgress)
-                    Toggle("재생 이퀄라이저 표시", isOn: $showEqualizer)
                     Toggle("마우스 호버 강조 효과", isOn: $hoverHighlight)
                     Toggle("마우스를 올리면 펼치고 벗어나면 접기", isOn: $hoverToExpand)
                     Text("클릭으로 직접 열어둔 플레이어는 자동으로 접히지 않습니다.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("재생 애니메이션") {
+                    Toggle("재생 애니메이션 표시", isOn: $showEqualizer)
+                    PlaybackAnimationPicker(
+                        selection: $playbackAnimation,
+                        color: previewAccentColor,
+                        reduceMotion: reduceMotion,
+                        isEnabled: showEqualizer
+                    )
                 }
 
                 settingsGroup("디스플레이") {
@@ -144,6 +159,7 @@ struct SettingsView: View {
         showArtwork = true
         showProgress = true
         showEqualizer = true
+        playbackAnimation = PlaybackAnimationStyle.bars.rawValue
         hoverHighlight = true
         hoverToExpand = true
         reduceMotion = false

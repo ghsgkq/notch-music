@@ -7,6 +7,7 @@ enum PreferenceKey {
     static let showArtwork = "showArtwork"
     static let showProgress = "showProgress"
     static let showEqualizer = "showEqualizer"
+    static let playbackAnimation = "playbackAnimationStyle"
     static let hoverHighlight = "hoverHighlight"
     static let hoverToExpand = "hoverToExpand"
     static let reduceMotion = "reduceMotion"
@@ -28,6 +29,7 @@ enum AppPreferences {
             PreferenceKey.showArtwork: true,
             PreferenceKey.showProgress: true,
             PreferenceKey.showEqualizer: true,
+            PreferenceKey.playbackAnimation: PlaybackAnimationStyle.bars.rawValue,
             PreferenceKey.hoverHighlight: true,
             PreferenceKey.hoverToExpand: true,
             PreferenceKey.reduceMotion: false,

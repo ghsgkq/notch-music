@@ -6,6 +6,8 @@ Notable changes to Notch Music are documented in this file.
 
 ### Added
 
+- Selectable playback animations with live previews: bars, wave, bouncing dots, and rotating ring. Paused playback and Reduce Motion stop their animation.
+
 - Optional hover expansion with delayed opening, delayed dismissal, and preservation of manually opened players.
 - Artwork-derived accent colors with a manual-color fallback for missing or neutral artwork.
 - Launch at login through macOS Service Management, including approval status and registration errors.
