@@ -11,6 +11,7 @@ enum PreferenceKey {
     static let hoverToExpand = "hoverToExpand"
     static let reduceMotion = "reduceMotion"
     static let accent = "accentColor"
+    static let artworkAccent = "artworkAccent"
     static let liquidGlass = "liquidGlass"
     static let displayTarget = "displayTarget"
     static let dynamicCompactReveal = "dynamicCompactReveal"
@@ -29,6 +30,7 @@ enum AppPreferences {
             PreferenceKey.hoverToExpand: true,
             PreferenceKey.reduceMotion: false,
             PreferenceKey.accent: AccentChoice.green.rawValue,
+            PreferenceKey.artworkAccent: true,
             PreferenceKey.liquidGlass: true,
             PreferenceKey.displayTarget: DisplayTarget.builtIn.rawValue,
             PreferenceKey.dynamicCompactReveal: true

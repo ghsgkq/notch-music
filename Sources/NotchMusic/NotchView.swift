@@ -10,12 +10,16 @@ struct NotchView: View {
     @AppStorage(PreferenceKey.hoverToExpand) private var hoverToExpand = true
     @AppStorage(PreferenceKey.reduceMotion) private var reduceMotion = false
     @AppStorage(PreferenceKey.accent) private var accentName = AccentChoice.green.rawValue
+    @AppStorage(PreferenceKey.artworkAccent) private var artworkAccent = true
     @AppStorage(PreferenceKey.liquidGlass) private var liquidGlass = true
     @AppStorage(PreferenceKey.dynamicCompactReveal) private var dynamicCompactReveal = true
     @State private var hovering = false
 
     private var accentColor: Color {
-        AccentChoice(rawValue: accentName)?.color ?? .green
+        if artworkAccent, let color = player.artworkAccent {
+            return Color(nsColor: color)
+        }
+        return AccentChoice(rawValue: accentName)?.color ?? .green
     }
 
     private var showsLiquidGlass: Bool {

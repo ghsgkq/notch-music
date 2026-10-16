@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import MediaRemoteAdapter
 
 struct Track: Equatable {
@@ -13,6 +13,7 @@ final class NowPlayingController: ObservableObject {
     @Published var track = Track()
     @Published var isPlaying = false
     @Published var isExpanded = false
+    @Published private(set) var artworkAccent: NSColor?
     @Published private(set) var hasActiveTrack = false
     @Published private(set) var duration: TimeInterval = 0
     @Published private(set) var elapsedTime: TimeInterval = 0
@@ -121,6 +122,7 @@ final class NowPlayingController: ObservableObject {
                 print("[NotchMusic] adapter returned no active track")
             }
             track = Track()
+            artworkAccent = nil
             isPlaying = false
             hasActiveTrack = false
             duration = 0
@@ -133,11 +135,15 @@ final class NowPlayingController: ObservableObject {
             print("[NotchMusic] \(title) — \(artist), playing=\(payload.isPlaying ?? false), artwork=\(payload.artwork != nil)")
         }
         let changed = track.title != title || track.artist != artist
+        let artwork = payload.artwork?.tiffRepresentation
+        if track.artwork != artwork {
+            artworkAccent = ArtworkAccent.color(from: artwork)
+        }
         track = Track(
             title: title,
             artist: artist,
             album: payload.album ?? "",
-            artwork: payload.artwork?.tiffRepresentation
+            artwork: artwork
         )
         hasActiveTrack = true
         isPlaying = payload.isPlaying ?? ((payload.playbackRate ?? 0) > 0)

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(PreferenceKey.hoverToExpand) private var hoverToExpand = true
     @AppStorage(PreferenceKey.reduceMotion) private var reduceMotion = false
     @AppStorage(PreferenceKey.accent) private var accent = AccentChoice.green.rawValue
+    @AppStorage(PreferenceKey.artworkAccent) private var artworkAccent = true
     @AppStorage(PreferenceKey.liquidGlass) private var liquidGlass = true
     @AppStorage(PreferenceKey.displayTarget) private var displayTarget = DisplayTarget.builtIn.rawValue
     @AppStorage(PreferenceKey.dynamicCompactReveal) private var dynamicCompactReveal = true
@@ -68,8 +69,9 @@ struct SettingsView: View {
 
                 settingsGroup("스타일") {
                     Toggle("펼친 화면에 리퀴드 글래스 적용", isOn: $liquidGlass)
+                    Toggle("앨범 표지 색상 자동 적용", isOn: $artworkAccent)
 
-                    Picker("강조 색상", selection: $accent) {
+                    Picker(artworkAccent ? "기본 강조 색상" : "강조 색상", selection: $accent) {
                         ForEach(AccentChoice.allCases) { choice in
                             Text(choice.title).tag(choice.rawValue)
                         }
@@ -111,6 +113,7 @@ struct SettingsView: View {
         hoverToExpand = true
         reduceMotion = false
         accent = AccentChoice.green.rawValue
+        artworkAccent = true
         liquidGlass = true
         displayTarget = DisplayTarget.builtIn.rawValue
         dynamicCompactReveal = true
