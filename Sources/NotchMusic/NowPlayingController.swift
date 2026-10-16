@@ -21,6 +21,16 @@ final class NowPlayingController: ObservableObject {
     private var started = false
     private var progressUpdatedAt = Date()
     private var autoCollapseTask: Task<Void, Never>?
+    private var hoverTask: Task<Void, Never>?
+    private var openedByHover = false
+    private var pointerIsInside = false
+    private let hoverOpenDelay: Duration
+    private let hoverCloseDelay: Duration
+
+    init(hoverOpenDelay: Duration = .milliseconds(350), hoverCloseDelay: Duration = .milliseconds(700)) {
+        self.hoverOpenDelay = hoverOpenDelay
+        self.hoverCloseDelay = hoverCloseDelay
+    }
 
     func start() {
         guard !started else { return }
@@ -65,7 +75,38 @@ final class NowPlayingController: ObservableObject {
 
     func toggleExpanded() {
         autoCollapseTask?.cancel()
+        hoverTask?.cancel()
+        openedByHover = false
         isExpanded.toggle()
+    }
+
+    func updateHover(_ inside: Bool, enabled: Bool) {
+        pointerIsInside = inside
+        hoverTask?.cancel()
+        guard enabled else {
+            if openedByHover { isExpanded = false }
+            openedByHover = false
+            return
+        }
+
+        if inside {
+            guard !isExpanded else { return }
+            hoverTask = Task { [weak self, hoverOpenDelay] in
+                do { try await Task.sleep(for: hoverOpenDelay) } catch { return }
+                guard let self, self.pointerIsInside else { return }
+                self.autoCollapseTask?.cancel()
+                self.openedByHover = true
+                self.isExpanded = true
+            }
+        } else {
+            guard openedByHover else { return }
+            hoverTask = Task { [weak self, hoverCloseDelay] in
+                do { try await Task.sleep(for: hoverCloseDelay) } catch { return }
+                guard let self, !self.pointerIsInside, self.openedByHover else { return }
+                self.openedByHover = false
+                self.isExpanded = false
+            }
+        }
     }
 
     func progress(at date: Date) -> Double {
@@ -104,6 +145,8 @@ final class NowPlayingController: ObservableObject {
         elapsedTime = max(0, payload.currentElapsedTime ?? ((payload.elapsedTimeMicros ?? 0) / 1_000_000))
         progressUpdatedAt = Date()
         if isPlaying && changed && AppPreferences.autoExpand {
+            hoverTask?.cancel()
+            openedByHover = false
             isExpanded = true
             if AppPreferences.autoCollapse {
                 scheduleAutoCollapse(for: title)
@@ -127,6 +170,10 @@ final class NowPlayingController: ObservableObject {
         autoCollapseTask?.cancel()
         autoCollapseTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(max(2, AppPreferences.autoCollapseDelay)))
+            // Leave the controls open while the pointer is interacting with them.
+            while !Task.isCancelled, self?.pointerIsInside == true {
+                try? await Task.sleep(for: .milliseconds(200))
+            }
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 guard let self, self.track.title == title else { return }

@@ -7,6 +7,7 @@ struct NotchView: View {
     @AppStorage(PreferenceKey.showProgress) private var showProgress = true
     @AppStorage(PreferenceKey.showEqualizer) private var showEqualizer = true
     @AppStorage(PreferenceKey.hoverHighlight) private var hoverHighlight = true
+    @AppStorage(PreferenceKey.hoverToExpand) private var hoverToExpand = true
     @AppStorage(PreferenceKey.reduceMotion) private var reduceMotion = false
     @AppStorage(PreferenceKey.accent) private var accentName = AccentChoice.green.rawValue
     @AppStorage(PreferenceKey.liquidGlass) private var liquidGlass = true
@@ -95,7 +96,14 @@ struct NotchView: View {
             radius: player.isExpanded ? 18 : 8,
             y: 7
         )
-        .onHover { hovering = $0 }
+        .onHover {
+            hovering = $0
+            player.updateHover($0, enabled: hoverToExpand)
+        }
+        .onChange(of: hoverToExpand) { _, enabled in
+            player.updateHover(hovering, enabled: enabled)
+        }
+        .onDisappear { player.updateHover(false, enabled: false) }
         .animation(.easeOut(duration: 0.18), value: hovering)
         .animation(expansionAnimation, value: player.isExpanded)
         .animation(

@@ -8,6 +8,7 @@ enum PreferenceKey {
     static let showProgress = "showProgress"
     static let showEqualizer = "showEqualizer"
     static let hoverHighlight = "hoverHighlight"
+    static let hoverToExpand = "hoverToExpand"
     static let reduceMotion = "reduceMotion"
     static let accent = "accentColor"
     static let liquidGlass = "liquidGlass"
@@ -25,6 +26,7 @@ enum AppPreferences {
             PreferenceKey.showProgress: true,
             PreferenceKey.showEqualizer: true,
             PreferenceKey.hoverHighlight: true,
+            PreferenceKey.hoverToExpand: true,
             PreferenceKey.reduceMotion: false,
             PreferenceKey.accent: AccentChoice.green.rawValue,
             PreferenceKey.liquidGlass: true,

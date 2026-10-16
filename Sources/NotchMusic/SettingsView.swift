@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage(PreferenceKey.showProgress) private var showProgress = true
     @AppStorage(PreferenceKey.showEqualizer) private var showEqualizer = true
     @AppStorage(PreferenceKey.hoverHighlight) private var hoverHighlight = true
+    @AppStorage(PreferenceKey.hoverToExpand) private var hoverToExpand = true
     @AppStorage(PreferenceKey.reduceMotion) private var reduceMotion = false
     @AppStorage(PreferenceKey.accent) private var accent = AccentChoice.green.rawValue
     @AppStorage(PreferenceKey.liquidGlass) private var liquidGlass = true
@@ -44,6 +45,10 @@ struct SettingsView: View {
                     Toggle("재생 진행률 표시", isOn: $showProgress)
                     Toggle("재생 이퀄라이저 표시", isOn: $showEqualizer)
                     Toggle("마우스 호버 강조 효과", isOn: $hoverHighlight)
+                    Toggle("마우스를 올리면 펼치고 벗어나면 접기", isOn: $hoverToExpand)
+                    Text("클릭으로 직접 열어둔 플레이어는 자동으로 접히지 않습니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 settingsGroup("디스플레이") {
@@ -103,6 +108,7 @@ struct SettingsView: View {
         showProgress = true
         showEqualizer = true
         hoverHighlight = true
+        hoverToExpand = true
         reduceMotion = false
         accent = AccentChoice.green.rawValue
         liquidGlass = true

@@ -6,6 +6,8 @@ Notable changes to Notch Music are documented in this file.
 
 ### Added
 
+- Optional hover expansion with delayed opening, delayed dismissal, and preservation of manually opened players.
+
 - MIT project license, third-party notices, security policy, and contribution guide.
 - Issue templates, Dependabot configuration, and macOS continuous integration.
 - Developer ID signing and notarization release helper.
