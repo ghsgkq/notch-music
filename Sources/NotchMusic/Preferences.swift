@@ -16,6 +16,7 @@ enum PreferenceKey {
     static let displayTarget = "displayTarget"
     static let dynamicCompactReveal = "dynamicCompactReveal"
     static let playbackFilter = "playbackFilter"
+    static let displayAdjustments = "displayAdjustments"
 }
 
 enum AppPreferences {

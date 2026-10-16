@@ -6,15 +6,18 @@ struct NotchLayout {
     let compactSize: NSSize
     let idleSize: NSSize
     let expandedSize: NSSize
+    private let adjustment: DisplayAdjustment
 
     var isFloating: Bool { notchRect == nil }
-    var notchWidth: CGFloat { notchRect?.width ?? 0 }
+    let notchWidth: CGFloat
     // AppKit can round window dimensions to whole points. Keep the host and its canvas equal.
     var canvasSize: NSSize {
         NSSize(width: ceil(expandedSize.width), height: ceil(expandedSize.height))
     }
 
-    init(screenFrame: NSRect, topInset: CGFloat, leftArea: NSRect?, rightArea: NSRect?) {
+    init(screenFrame: NSRect, topInset: CGFloat, leftArea: NSRect?, rightArea: NSRect?, adjustment: DisplayAdjustment = DisplayAdjustment()) {
+        let adjusted = adjustment.normalized
+        self.adjustment = adjusted
         if topInset > 0, let leftArea, let rightArea, rightArea.minX > leftArea.maxX {
             notchRect = NSRect(
                 x: leftArea.maxX,
@@ -26,16 +29,18 @@ struct NotchLayout {
             notchRect = nil
         }
 
-        let height = notchRect?.height ?? 40
-        let width = notchRect.map { $0.width + 128 } ?? 300
+        notchWidth = notchRect.map { max(40, $0.width + adjusted.widthAdjustment) } ?? 0
+        let baseHeight = notchRect?.height ?? 40
+        let height = max(min(24, baseHeight), baseHeight + adjusted.heightAdjustment)
+        let width = notchRect == nil ? max(180, 300 + adjusted.widthAdjustment) : notchWidth + 128
         compactSize = NSSize(width: width, height: height)
-        idleSize = NSSize(width: notchRect?.width ?? 0, height: height)
+        idleSize = NSSize(width: notchWidth, height: height)
         expandedSize = NSSize(width: max(notchRect == nil ? 420 : 450, width), height: height + 172)
     }
 
     func panelFrame(screenFrame: NSRect, visibleFrame: NSRect) -> NSRect {
-        let centerX = notchRect?.midX ?? screenFrame.midX
-        let topEdge = isFloating ? visibleFrame.maxY - 8 : screenFrame.maxY
+        let centerX = (notchRect?.midX ?? screenFrame.midX) + adjustment.horizontalOffset
+        let topEdge = (isFloating ? visibleFrame.maxY - 8 : screenFrame.maxY) - adjustment.verticalOffset
         return NSRect(
             x: centerX - canvasSize.width / 2,
             y: topEdge - canvasSize.height,

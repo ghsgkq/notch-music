@@ -86,6 +86,8 @@ struct SettingsView: View {
                          : "외부 모니터에서는 화면 상단의 플로팅 플레이어 디자인을 사용합니다.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    DisplayAdjustmentView(target: DisplayTarget(rawValue: displayTarget) ?? .builtIn)
                 }
 
                 settingsGroup("표시할 앱") {
@@ -134,6 +136,7 @@ struct SettingsView: View {
     private func reset() {
         if loginItem.canConfigure { loginItem.setEnabled(false) }
         UserDefaults.standard.removeObject(forKey: PreferenceKey.playbackFilter)
+        UserDefaults.standard.removeObject(forKey: PreferenceKey.displayAdjustments)
         player.refreshPlaybackFilter()
         autoExpand = false
         autoCollapse = true

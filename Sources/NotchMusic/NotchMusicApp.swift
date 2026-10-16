@@ -6,7 +6,7 @@ struct NotchMusicApp: App {
 
     var body: some Scene {
         Settings {
-            EmptyView()
+            SettingsView(player: appDelegate.player)
         }
     }
 }

@@ -10,6 +10,7 @@ Notable changes to Notch Music are documented in this file.
 - Artwork-derived accent colors with a manual-color fallback for missing or neutral artwork.
 - Launch at login through macOS Service Management, including approval status and registration errors.
 - Playback source filtering with a browser exclusion switch, per-app choices, and immediate updates to the current track.
+- Per-display position and size adjustments, persisted by display UUID with individual reset controls.
 
 - MIT project license, third-party notices, security policy, and contribution guide.
 - Issue templates, Dependabot configuration, and macOS continuous integration.
@@ -26,6 +27,7 @@ Notable changes to Notch Music are documented in this file.
 - Match notch width, height, and click regions to the current display resolution and scaling.
 - Keep wide notches inside the player canvas and use a floating player on notchless built-in displays.
 - Convert mouse coordinates before hit testing and keep fractional notch heights flush with the screen top.
+- Show the full settings view when opening the native macOS Settings window.
 
 ## 1.0.0 - 2026-08-17
 

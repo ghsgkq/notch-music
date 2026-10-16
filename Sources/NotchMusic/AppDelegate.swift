@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let player = NowPlayingController()
+    let player = NowPlayingController()
     private var notchPanel: NotchPanel?
     private var statusItem: NSStatusItem?
     private let settingsWindow = SettingsWindowController()

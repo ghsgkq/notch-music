@@ -5,6 +5,7 @@ import SwiftUI
 final class NotchPanel: NSPanel {
     private let player: NowPlayingController
     private var configuredDisplayTarget = AppPreferences.displayTarget
+    private var configuredAdjustmentsData: Data?
 
     init(player: NowPlayingController) {
         self.player = player
@@ -50,12 +51,15 @@ final class NotchPanel: NSPanel {
 
     private func configureForSelectedDisplay(display: Bool) {
         configuredDisplayTarget = AppPreferences.displayTarget
-        let screen = Self.selectedScreen(for: configuredDisplayTarget)
+        guard let screen = DisplayConfiguration.selectedScreen(for: configuredDisplayTarget) else { return }
+        configuredAdjustmentsData = UserDefaults.standard.data(forKey: PreferenceKey.displayAdjustments)
+        let adjustment = DisplayAdjustments.decode(configuredAdjustmentsData)[DisplayConfiguration.id(for: screen)]
         let layout = NotchLayout(
             screenFrame: screen.frame,
             topInset: screen.safeAreaInsets.top,
             leftArea: screen.auxiliaryTopLeftArea,
-            rightArea: screen.auxiliaryTopRightArea
+            rightArea: screen.auxiliaryTopRightArea,
+            adjustment: adjustment
         )
 
         let rootView = NotchView(
@@ -83,31 +87,10 @@ final class NotchPanel: NSPanel {
     }
 
     @objc private func preferencesDidChange() {
-        guard configuredDisplayTarget != AppPreferences.displayTarget else { return }
+        guard configuredDisplayTarget != AppPreferences.displayTarget ||
+              configuredAdjustmentsData != UserDefaults.standard.data(forKey: PreferenceKey.displayAdjustments) else { return }
         configureForSelectedDisplay(display: true)
         orderFrontRegardless()
-    }
-
-    private static func selectedScreen(for target: DisplayTarget) -> NSScreen {
-        let screens = NSScreen.screens
-        guard let fallback = screens.first else {
-            preconditionFailure("Notch Music requires an attached display")
-        }
-
-        switch target {
-        case .builtIn:
-            return screens.first(where: isBuiltIn) ?? fallback
-        case .primary:
-            // The first screen owns the menu bar and is the configured primary display.
-            return fallback
-        }
-    }
-
-    private static func isBuiltIn(_ screen: NSScreen) -> Bool {
-        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
-            return false
-        }
-        return CGDisplayIsBuiltin(CGDirectDisplayID(number.uint32Value)) != 0
     }
 }
 
