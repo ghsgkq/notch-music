@@ -2,12 +2,7 @@ import SwiftUI
 
 struct NotchView: View {
     @ObservedObject var player: NowPlayingController
-    let notchWidth: CGFloat
-    let idleCompactWidth: CGFloat
-    let compactWidth: CGFloat
-    let expandedWidth: CGFloat
-    let canvasSize: NSSize
-    let usesExternalDisplayStyle: Bool
+    let layout: NotchLayout
     @AppStorage(PreferenceKey.showArtwork) private var showArtwork = true
     @AppStorage(PreferenceKey.showProgress) private var showProgress = true
     @AppStorage(PreferenceKey.showEqualizer) private var showEqualizer = true
@@ -38,8 +33,10 @@ struct NotchView: View {
         ZStack(alignment: .top) {
             island
         }
-        .frame(width: canvasSize.width, height: canvasSize.height, alignment: .top)
+        .frame(width: layout.canvasSize.width, height: layout.canvasSize.height, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.clear)
+        .ignoresSafeArea()
     }
 
     private var island: some View {
@@ -51,8 +48,8 @@ struct NotchView: View {
                 .allowsHitTesting(player.isExpanded)
         }
         .frame(
-            width: player.isExpanded ? expandedWidth : (revealsCompactActivity ? compactWidth : idleCompactWidth),
-            height: player.isExpanded ? canvasSize.height : 40,
+            width: player.isExpanded ? layout.expandedSize.width : (revealsCompactActivity ? layout.compactSize.width : layout.idleSize.width),
+            height: player.isExpanded ? layout.expandedSize.height : layout.compactSize.height,
             alignment: .top
         )
         .background {
@@ -80,10 +77,10 @@ struct NotchView: View {
             }
         }
         .clipShape(UnevenRoundedRectangle(
-            topLeadingRadius: usesExternalDisplayStyle ? (player.isExpanded ? 26 : 20) : 0,
-            bottomLeadingRadius: player.isExpanded ? 26 : 20,
-            bottomTrailingRadius: player.isExpanded ? 26 : 20,
-            topTrailingRadius: usesExternalDisplayStyle ? (player.isExpanded ? 26 : 20) : 0
+            topLeadingRadius: layout.isFloating ? (player.isExpanded ? 26 : compactCornerRadius) : 0,
+            bottomLeadingRadius: player.isExpanded ? 26 : compactCornerRadius,
+            bottomTrailingRadius: player.isExpanded ? 26 : compactCornerRadius,
+            topTrailingRadius: layout.isFloating ? (player.isExpanded ? 26 : compactCornerRadius) : 0
         ))
         .overlay(alignment: .bottom) {
             Capsule()
@@ -107,15 +104,23 @@ struct NotchView: View {
         )
     }
 
+    private var compactCornerRadius: CGFloat {
+        min(20, layout.compactSize.height / 2)
+    }
+
+    private var compactArtworkSize: CGFloat {
+        min(28, max(0, layout.compactSize.height - 8))
+    }
+
     private var compactHeader: some View {
         Group {
-            if usesExternalDisplayStyle {
+            if layout.isFloating {
                 externalCompactHeader
             } else {
                 notchCompactHeader
             }
         }
-        .frame(height: 40)
+        .frame(height: layout.compactSize.height)
         .contentShape(Rectangle())
         .onTapGesture {
             player.toggleExpanded()
@@ -127,14 +132,15 @@ struct NotchView: View {
             MiniArtwork(
                 data: showArtwork ? player.track.artwork : nil,
                 isPlaying: player.isPlaying,
-                accentColor: accentColor
+                accentColor: accentColor,
+                size: compactArtworkSize
             )
                 .frame(width: 46, alignment: .leading)
                 .opacity(revealsCompactActivity ? 1 : 0)
                 .scaleEffect(revealsCompactActivity ? 1 : 0.68)
                 .offset(x: revealsCompactActivity ? 0 : 22)
 
-            Spacer().frame(width: notchWidth)
+            Spacer().frame(width: layout.notchWidth)
 
             Group {
                 if player.isPlaying {
@@ -150,6 +156,7 @@ struct NotchView: View {
                         .foregroundStyle(.white.opacity(0.5))
                 }
             }
+            .scaleEffect(min(1, layout.compactSize.height / 40))
             .frame(width: 46, alignment: .trailing)
             .opacity(revealsCompactActivity ? 1 : 0)
             .scaleEffect(revealsCompactActivity ? 1 : 0.68)
@@ -403,6 +410,7 @@ private struct MiniArtwork: View {
     let data: Data?
     let isPlaying: Bool
     let accentColor: Color
+    var size: CGFloat = 28
 
     var body: some View {
         Group {
@@ -417,7 +425,7 @@ private struct MiniArtwork: View {
                 }
             }
         }
-        .frame(width: 28, height: 28)
+        .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 7, style: .continuous)

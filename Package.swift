@@ -17,6 +17,10 @@ let package = Package(
         .executableTarget(
             name: "NotchMusic",
             dependencies: [.product(name: "MediaRemoteAdapter", package: "mediaremote-adapter")]
+        ),
+        .testTarget(
+            name: "NotchMusicTests",
+            dependencies: ["NotchMusic"]
         )
     ]
 )

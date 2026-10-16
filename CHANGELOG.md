@@ -16,6 +16,12 @@ Notable changes to Notch Music are documented in this file.
 - Added legal notices to the generated app bundle.
 - Made local ad-hoc signatures structurally verifiable with `codesign`.
 
+### Fixed
+
+- Match notch width, height, and click regions to the current display resolution and scaling.
+- Keep wide notches inside the player canvas and use a floating player on notchless built-in displays.
+- Convert mouse coordinates before hit testing and keep fractional notch heights flush with the screen top.
+
 ## 1.0.0 - 2026-08-17
 
 - Initial release of the compact and expanded notch player.

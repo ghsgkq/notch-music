@@ -24,6 +24,9 @@ jobs:
       - name: Validate scripts
         run: zsh -n Scripts/*.sh
 
+      - name: Test display layouts
+        run: swift test
+
       - name: Build app bundle
         run: ./Scripts/build-app.sh
 

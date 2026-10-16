@@ -27,6 +27,7 @@ Before submitting a pull request, run:
 
 ```bash
 swift build
+swift test
 ./Scripts/build-app.sh
 codesign --verify --deep --strict "dist/Notch Music.app"
 ```

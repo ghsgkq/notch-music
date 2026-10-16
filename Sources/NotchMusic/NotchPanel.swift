@@ -4,10 +4,6 @@ import SwiftUI
 @MainActor
 final class NotchPanel: NSPanel {
     private let player: NowPlayingController
-    private var compactSize = NSSize(width: 300, height: 40)
-    private var idleCompactSize = NSSize(width: 190, height: 40)
-    private var visibleExpandedSize = NSSize(width: 450, height: 212)
-    private let panelSize = NSSize(width: 450, height: 212)
     private var configuredDisplayTarget = AppPreferences.displayTarget
 
     init(player: NowPlayingController) {
@@ -55,43 +51,30 @@ final class NotchPanel: NSPanel {
     private func configureForSelectedDisplay(display: Bool) {
         configuredDisplayTarget = AppPreferences.displayTarget
         let screen = Self.selectedScreen(for: configuredDisplayTarget)
-        let usesExternalDisplayStyle = !Self.isBuiltIn(screen)
-        let notchWidth = usesExternalDisplayStyle ? 0 : Self.notchWidth(on: screen)
-        compactSize = NSSize(
-            width: usesExternalDisplayStyle ? 300 : max(300, notchWidth + 128),
-            height: 40
-        )
-        idleCompactSize = NSSize(
-            width: usesExternalDisplayStyle ? 0 : notchWidth,
-            height: 40
-        )
-        visibleExpandedSize = NSSize(
-            width: usesExternalDisplayStyle ? 420 : panelSize.width,
-            height: panelSize.height
+        let layout = NotchLayout(
+            screenFrame: screen.frame,
+            topInset: screen.safeAreaInsets.top,
+            leftArea: screen.auxiliaryTopLeftArea,
+            rightArea: screen.auxiliaryTopRightArea
         )
 
         let rootView = NotchView(
             player: player,
-            notchWidth: notchWidth,
-            idleCompactWidth: idleCompactSize.width,
-            compactWidth: compactSize.width,
-            expandedWidth: visibleExpandedSize.width,
-            canvasSize: panelSize,
-            usesExternalDisplayStyle: usesExternalDisplayStyle
+            layout: layout
         )
         let hostingView = NotchHostingView(
             rootView: rootView,
             player: player,
-            idleCompactSize: idleCompactSize,
-            compactSize: compactSize,
-            expandedSize: visibleExpandedSize
+            layout: layout
         )
         hostingView.sizingOptions = []
+        // This overlay intentionally occupies the camera's unsafe area.
+        hostingView.safeAreaRegions = []
         hostingView.autoresizingMask = [.width, .height]
         contentView = hostingView
 
         // Keep the AppKit window fixed. Only the SwiftUI island animates.
-        setFrame(frame(for: panelSize, on: screen, floating: usesExternalDisplayStyle), display: display)
+        setFrame(layout.panelFrame(screenFrame: screen.frame, visibleFrame: screen.visibleFrame), display: display)
     }
 
     @objc private func screenParametersDidChange() {
@@ -103,16 +86,6 @@ final class NotchPanel: NSPanel {
         guard configuredDisplayTarget != AppPreferences.displayTarget else { return }
         configureForSelectedDisplay(display: true)
         orderFrontRegardless()
-    }
-
-    private func frame(for size: NSSize, on screen: NSScreen, floating: Bool) -> NSRect {
-        let topEdge = floating ? screen.visibleFrame.maxY - 8 : screen.frame.maxY
-        return NSRect(
-            x: screen.frame.midX - size.width / 2,
-            y: topEdge - size.height,
-            width: size.width,
-            height: size.height
-        )
     }
 
     private static func selectedScreen(for target: DisplayTarget) -> NSScreen {
@@ -136,34 +109,21 @@ final class NotchPanel: NSPanel {
         }
         return CGDisplayIsBuiltin(CGDirectDisplayID(number.uint32Value)) != 0
     }
-
-    private static func notchWidth(on screen: NSScreen) -> CGFloat {
-        guard let left = screen.auxiliaryTopLeftArea,
-            let right = screen.auxiliaryTopRightArea
-        else { return 190 }
-        return max(0, right.minX - left.maxX)
-    }
 }
 
 /// The fixed transparent canvas must not block clicks outside the visible island.
 @MainActor
-private final class NotchHostingView: NSHostingView<NotchView> {
+final class NotchHostingView: NSHostingView<NotchView> {
     private let player: NowPlayingController
-    private let idleCompactSize: NSSize
-    private let compactSize: NSSize
-    private let expandedSize: NSSize
+    private let layout: NotchLayout
 
     init(
         rootView: NotchView,
         player: NowPlayingController,
-        idleCompactSize: NSSize,
-        compactSize: NSSize,
-        expandedSize: NSSize
+        layout: NotchLayout
     ) {
         self.player = player
-        self.idleCompactSize = idleCompactSize
-        self.compactSize = compactSize
-        self.expandedSize = expandedSize
+        self.layout = layout
         super.init(rootView: rootView)
     }
 
@@ -178,15 +138,17 @@ private final class NotchHostingView: NSHostingView<NotchView> {
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
-        let compactIsRevealed = !AppPreferences.dynamicCompactReveal || player.hasActiveTrack
-        let size = player.isExpanded ? expandedSize : (compactIsRevealed ? compactSize : idleCompactSize)
-        let visibleRect = NSRect(
-            x: (bounds.width - size.width) / 2,
-            y: bounds.height - size.height,
-            width: size.width,
-            height: size.height
-        )
-        guard visibleRect.contains(point) else { return nil }
+        guard containsIslandPoint(point) else { return nil }
         return super.hitTest(point)
     }
+
+    func containsIslandPoint(_ point: NSPoint) -> Bool {
+        let compactIsRevealed = !AppPreferences.dynamicCompactReveal || player.hasActiveTrack
+        let visibleRect = layout.hitRect(in: bounds, flipped: isFlipped, expanded: player.isExpanded, revealed: compactIsRevealed)
+        // AppKit supplies a point in the superview's coordinates, while SwiftUI hosts are flipped.
+        let localPoint = convert(point, from: superview)
+        return visibleRect.contains(localPoint)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
