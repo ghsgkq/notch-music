@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @StateObject private var loginItem = LoginItemController()
     @AppStorage(PreferenceKey.autoExpand) private var autoExpand = false
     @AppStorage(PreferenceKey.autoCollapse) private var autoCollapse = true
     @AppStorage(PreferenceKey.autoCollapseDelay) private var autoCollapseDelay = 4.5
@@ -24,6 +25,25 @@ struct SettingsView: View {
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                     Text("변경 내용은 바로 적용됩니다.")
                         .foregroundStyle(.secondary)
+                }
+
+                settingsGroup("일반") {
+                    Toggle("로그인 시 자동 실행", isOn: Binding(
+                        get: { loginItem.isEnabled }, set: { loginItem.setEnabled($0) }
+                    ))
+                    .disabled(!loginItem.canConfigure)
+                    if !loginItem.canConfigure {
+                        Text("응용 프로그램 폴더에 설치한 앱에서 설정할 수 있습니다.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if loginItem.needsApproval {
+                        Text("시스템 설정의 로그인 항목에서 허용해 주세요.")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Button("로그인 항목 설정 열기") { loginItem.openSystemSettings() }
+                    }
+                    if let error = loginItem.errorMessage {
+                        Text(error).font(.caption).foregroundStyle(.red)
+                    }
                 }
 
                 settingsGroup("곡 변경") {
@@ -90,6 +110,10 @@ struct SettingsView: View {
         }
         .frame(width: 500, height: 520)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear { loginItem.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            loginItem.refresh()
+        }
     }
 
     private func settingsGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -103,6 +127,7 @@ struct SettingsView: View {
     }
 
     private func reset() {
+        if loginItem.canConfigure { loginItem.setEnabled(false) }
         autoExpand = false
         autoCollapse = true
         autoCollapseDelay = 4.5
